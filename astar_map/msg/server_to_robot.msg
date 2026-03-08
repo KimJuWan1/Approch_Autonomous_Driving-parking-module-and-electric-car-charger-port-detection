@@ -1,0 +1,9 @@
+uint8 Robot_ID
+uint8 Cmd_drive_mode
+uint8 Cmd_dest_index
+float32 Cmd_dest_lat
+float32 Cmd_dest_lon
+uint8 Cmd_use_vel_control
+float32 Cmd_linear_velocity
+float32 Cmd_angular_velocity
+uint8 Alive

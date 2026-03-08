@@ -1,0 +1,13 @@
+uint8 ID
+uint8 Cur_state
+uint8 Cur_node_index
+uint8 Dest_node_index
+float32 Dest_node_lat
+float32 Dest_node_lon
+float64 Cur_latitude
+float64 Cur_longitude
+float32 Cur_linear_velocity
+float32 Cur_angular_velocity
+float32 Dist_to_destination
+float32 Remain_dist_to_destination
+uint8 Alive_count

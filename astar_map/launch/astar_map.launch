@@ -1,0 +1,26 @@
+<!-- test.launch -->
+<launch>
+  <!-- OSM 파일 정의 -->
+  <!-- <arg name="osm_file" default="$(find astar_map)/map/trajectory_rotate.osm"/> -->
+  <!-- <arg name="osm_file" default="$(find astar_map)/map/trajectory_rotate_change.osm"/> -->
+  <!-- arg name="osm_file" default="$(find astar_map)/map/campus_trajectory_copy.osm"/> -->
+  <arg name="osm_file" default="$(find astar_map)/map/test_trajectory.osm"/>
+  <!-- <arg name="osm_file" default="$(find astar_map)/map/test_trajectory_rotated_save.osm"/> -->
+  <!-- <arg name="osm_file" default="$(find astar_map)/map/campus_trajectory_0405_fix.osm"/> -->
+  <!-- <arg name="ref_file" default="$(find astar_map)/map/map_reference_coordinate_cap.csv"/> -->
+  <arg name="ref_file" default="$(find astar_map)/map/map_reference_coordinate.csv"/>
+
+  <!-- <arg name="server_dst_node_list" default="-101752,-101779,-101799,-101816,-101834,-101936,-101953,-102003,-102234,-102196"/> -->
+  <arg name="server_dst_node_list" default=""/>
+
+  <!-- astar_map_node.py 노드 실행 -->
+  <node pkg="astar_map" type="astar_map_node.py" name="astar_map_node" output="screen">
+    <param name="osm_file" value="$(arg osm_file)"/>
+    <param name="ref_file" value="$(arg ref_file)"/>
+    <param name="server_dst_node_list" value="$(arg server_dst_node_list)"/>
+    <!-- 필요한 경우 추가 파라미터 설정 -->
+  </node>
+
+  <!-- RViz 실행 -->
+  <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find astar_map)/rviz/osm_config.rviz"/> -->
+</launch>
