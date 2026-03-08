@@ -1,0 +1,5 @@
+<launch>
+    <!-- Node -->
+    <node pkg="simple_path_publisher" type="simple_path_publisher.py"   name="simple_path_publisher"    output="screen" 	 respawn="true"/>
+
+</launch>
