@@ -1,0 +1,13 @@
+# Goal
+geometry_msgs/PoseStamped target
+uint8 mode  # 0:AUTO 1:BACK_IN 2:HEAD_IN 3:PARALLEL
+---
+# Result
+bool success
+string message
+---
+# Feedback
+string state
+float32 progress         # 0~1
+float32 lateral_error    # m (reserved)
+float32 heading_error    # rad (reserved)

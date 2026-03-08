@@ -1,0 +1,14 @@
+<launch>
+    <!-- Arguments -->
+    <arg name="trajectory_file_path" default="$(find lio_localizer)/map/ai_convergence/trajectory.csv"/>
+    <arg name="pose_topic" default="lio_localizer/odometry/optimization"/>
+    <arg name="travel_distance" default="15.0"/>
+
+    <!-- Node -->
+    <node pkg="local_planner" type="local_planner"   name="local_planner"    output="screen" 	 respawn="true">
+        <param name="trajectory_file_path" value="$(arg trajectory_file_path)" />
+        <param name="pose_topic" value="$(arg pose_topic)" />
+        <param name="travel_distance" value="$(arg travel_distance)" />
+    </node>
+
+</launch>

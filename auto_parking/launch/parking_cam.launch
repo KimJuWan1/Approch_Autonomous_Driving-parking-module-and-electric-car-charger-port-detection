@@ -1,0 +1,132 @@
+<launch>
+  <!-- 기본 인자 -->
+  <arg name="use_map" default="true"/>
+  <arg name="use_fake_tf" default="true"/>
+  <arg name="sensor_height" default="0.50"/>
+
+  <!-- 카메라 토픽을 외부에서 제공해 주세요 -->
+  <arg name="image_topic" default="/camera/color/image_raw"/>
+
+  <!-- 점유판정용 LiDAR 사용 여부 -->
+  <arg name="use_cloud_for_occupancy" default="false"/>
+  <arg name="cloud_topic" default="/ouster/points_map"/>
+
+  <!-- (선택) 로컬라이저 없을 때 임시 TF: map -> os_sensor -->
+  <group if="$(arg use_map)">
+    <group if="$(arg use_fake_tf)">
+      <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_os_sensor"
+            args="0 0 $(arg sensor_height) 0 0 0 1 map os_sensor"/>
+    </group>
+
+    <!-- LiDAR 점유판정 쓸 때만 포인트 변환 띄움 -->
+    <group if="$(arg use_cloud_for_occupancy)">
+      <node pkg="auto_parking" type="points_frame_relay.py" name="points_to_map" output="screen" respawn="true">
+        <param name="input" value="/ouster/points"/>
+        <param name="output" value="$(arg cloud_topic)"/>
+        <param name="target_frame" value="map"/>
+        <param name="timeout_sec" value="0.2"/>
+      </node>
+    </group>
+  </group>
+
+  <group ns="parking">
+    <!-- 카메라 비전 검출 노드 -->
+    <node pkg="auto_parking" type="parking_vision_detector_node.py" name="vision" output="screen" respawn="true">
+      <param name="frame_id" value="map"/>
+      <param name="base_frame" value="os_sensor"/>
+      <param name="image_topic" value="$(arg image_topic)"/>
+
+      <!-- BEV: 4점 매칭 예시 (환경에 맞게 교정) -->
+      <param name="bev_src_px" type="yaml" value="[[640,520],[1000,520],[850,360],[430,360]]"/>
+      <param name="bev_dst_m"  type="yaml" value="[[0.5,-0.4],[0.5,0.4],[1.8,0.25],[1.8,-0.25]]"/>
+      <param name="bev_m_per_px" value="0.01"/>
+      <param name="bev_size_m"   type="yaml" value="[4.0, 3.0]"/>
+
+      <param name="only_front" value="true"/>
+      <param name="front_axis" value="x"/>
+      <param name="front_min_m" value="0.30"/>
+
+      <param name="gray_clip_limit" value="3.0"/>
+      <param name="adaptive" value="true"/>
+      <param name="binary_thr" value="200"/>
+      <param name="canny_low_high" type="yaml" value="[50,150]"/>
+
+      <!-- 허프 -->
+      <param name="hough_rho" value="1.0"/>
+      <param name="hough_theta_deg" value="1.0"/>
+      <param name="hough_thresh" value="45"/>
+      <param name="hough_min_len" value="30"/>
+      <param name="hough_max_gap" value="5"/>
+
+      <!-- 각도: 허용 폭 넓힘 (기본 10→20) -->
+      <param name="angle_main_deg" type="yaml" value="[0.0, 90.0]"/>
+      <param name="angle_tol_deg"  value="20.0"/>
+
+      <!-- 슬롯 규격 -->
+      <param name="slot_length_m" value="1.0"/>
+      <param name="width_candidates_m" type="yaml" value="[0.45, 0.50, 0.52]"/>
+      <param name="pair_width_tol_m" value="0.06"/>
+      <param name="center_step_m" value="0.03"/>
+      <param name="min_score" value="0.20"/>
+
+      <!-- 혼잡 억제/최적화 (ROI 등) -->
+      <param name="use_roi" value="true"/>
+      <param name="autorelax_if_zero" value="true"/>
+      <param name="roi_x_m" type="yaml" value="[0.3, 2.6]"/>
+      <param name="roi_y_m" type="yaml" value="[-0.9, 0.9]"/>
+
+      <!-- ★ 길이 기준 완화: 0.55 → 0.25 (m) -->
+      <param name="min_line_length_m" value="0.25"/>
+
+      <param name="merge_angle_tol_deg" value="4.0"/>
+      <param name="merge_rho_tol_m" value="0.03"/>
+      <param name="min_parallel_overlap_m" value="0.45"/>
+      <param name="max_lines_after_merge" value="80"/>
+      <param name="max_pairs_considered" value="300"/>
+      <param name="max_slots_publish" value="40"/>
+      <param name="max_processing_fps" value="8.0"/>
+      <param name="publish_markers" value="true"/>
+      <param name="width_mode" value="range"/>
+      <param name="width_range_m" type="yaml" value="[0.30, 0.90]"/>
+      <param name="min_parallel_overlap_m" value="0.30"/>
+
+      <!-- 점유 판정 -->
+      <param name="use_cloud_for_occupancy" value="$(arg use_cloud_for_occupancy)"/>
+      <param name="cloud_topic" value="$(arg cloud_topic)"/>
+      <param name="occupied_ratio_thr" value="0.06"/>
+      <param name="obstacle_z_low"  value="0.05"/>
+      <param name="obstacle_z_high" value="0.35"/>
+    </node>
+
+    <!-- 기존 파이프라인 -->
+    <node pkg="auto_parking" type="parking_planner_node.py" name="planner" output="screen">
+      <param name="frame_id" value="map"/>
+      <param name="step" value="0.1"/>
+    </node>
+
+    <node pkg="auto_parking" type="parking_controller_node.py" name="controller" output="screen">
+      <param name="max_speed" value="0.2"/>
+      <param name="lookahead" value="0.6"/>
+      <param name="xy_tol" value="0.08"/>
+      <param name="yaw_tol_deg" value="3.0"/>
+    </node>
+
+    <node pkg="auto_parking" type="parking_manager_node.py" name="manager" output="screen">
+      <param name="xy_tol" value="0.08"/>
+    </node>
+
+    <node pkg="auto_parking" type="parking_debug_viz.py" name="debug_viz" output="screen">
+      <param name="line_width" value="0.08"/>
+      <param name="text_size"  value="0.40"/>
+      <param name="z_up"       value="0.08"/>
+    </node>
+
+    <node pkg="auto_parking" type="parking_slots_logger.py" name="slots_logger" output="screen">
+      <param name="out" value="/tmp/parking_slots.csv"/>
+    </node>
+  </group>
+
+  <!-- RViz -->
+  <node pkg="rviz" type="rviz" name="rviz"
+        args="-d $(find auto_parking)/rviz/parking_debug.rviz -f map"/>
+</launch>

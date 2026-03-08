@@ -1,0 +1,7 @@
+<launch>
+    <!-- Node -->
+    <!-- <node pkg="dynamic_window_approach" type="new2.py"   name="dynamic_window_approach"    output="screen" 	 respawn="false"/> -->
+    <node pkg="dynamic_window_approach" type="dynamicwindowapproach.py"   name="dynamic_window_approach"    output="screen" 	 respawn="false"/>
+
+
+</launch>

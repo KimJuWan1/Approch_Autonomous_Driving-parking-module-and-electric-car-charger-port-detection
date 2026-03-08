@@ -1,0 +1,171 @@
+<launch>
+  <!-- 모드/옵션 -->
+  <arg name="use_map"      default="true"/>     <!-- 항상 map 프레임 사용 -->
+  <arg name="use_tape"     default="true"/>     <!-- 테이프 필터 사용 여부 -->
+  <arg name="edge_source"  default="density"/>  <!-- 라인 에지 소스: density | intensity -->
+  <arg name="sensor_height" default="0.50"/>    <!-- os_sensor가 바닥보다 위로 올라간 높이 (m) -->
+  <arg name="use_fake_tf"   default="true"/>    <!-- 로컬라이저 없을 때만 true -->
+
+  <!-- 공통: cmd_vel MUX -->
+  <node pkg="auto_parking" type="cmd_vel_mux.py" name="cmd_vel_mux" output="screen"/>
+
+  <!-- map 모드만 사용 -->
+  <group if="$(arg use_map)">
+
+    <!-- 로컬라이저가 없을 때만: map->os_sensor에 센서 높이 반영 -->
+    <group if="$(arg use_fake_tf)">
+      <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_os_sensor"
+            args="0 0 $(arg sensor_height) 0 0 0 1 map os_sensor"/>
+    </group>
+
+    <!-- os_sensor -> map 포인트 변환 (TF 준비되면 정상 동작) -->
+    <node pkg="auto_parking" type="points_frame_relay.py" name="points_to_map" output="screen" respawn="true">
+      <param name="input" value="/ouster/points"/>
+      <param name="output" value="/ouster/points_map"/>
+      <param name="target_frame" value="map"/>
+      <param name="timeout_sec" value="0.2"/>
+    </node>
+
+    <group ns="parking">
+
+      <!-- ========================= -->
+      <!-- (옵션) 테이프 강도 기반 필터 -->
+      <!-- ========================= -->
+      <group if="$(arg use_tape)">
+        <node pkg="auto_parking" type="parking_tape_filter_node.py" name="tape" output="screen" respawn="true">
+          <param name="frame_id" value="map"/>
+          <param name="points_topic" value="/ouster/points_map"/>
+
+          <!-- 바닥만 통과 (센서 높이는 TF에서 처리했으므로 바닥 기준 0~10cm) -->
+          <param name="z_low"  value="0.00"/>
+          <param name="z_high" value="0.10"/>
+
+          <!-- 강도/정규화/보강 파라미터 (최근 튜닝안) -->
+          <param name="keep_percentile"   value="98.0"/>   <!-- 상위 98%만 후보 -->
+          <param name="min_Ic"            value="0.60"/>   <!-- 보정 후 최소 강도 -->
+          <param name="range_comp_gamma"  value="1.20"/>   <!-- 거리 감쇠 보정 감마 -->
+          <param name="per_ring_normalize" value="false"/> <!-- 링별 정규화 끔 -->
+          <param name="voxel_m"           value="0.05"/>
+
+          <!-- 전방 ROI (잡음 억제) -->
+          <param name="only_front"  value="true"/>
+          <param name="front_axis"  value="x"/>
+          <param name="front_min_m" value="0.30"/>
+
+          <!-- 작은 클러스터 제거 & 선분 보강 -->
+          <param name="min_cluster_pts" value="6"/>
+          <param name="boost"        value="true"/>
+          <param name="boost_len_m"  value="0.90"/>
+          <param name="boost_step_m" value="0.03"/>
+        </node>
+      </group>
+
+      <!-- ========================= -->
+      <!-- 라인/슬롯 검출 (테이프 사용 여부에 따라 입력 선택) -->
+      <!-- ========================= -->
+      <group if="$(arg use_tape)">
+        <node pkg="auto_parking" type="parking_line_detector_node.py" name="perception" output="screen" respawn="true">
+          <param name="frame_id" value="map"/>
+          <param name="points_topic" value="/parking/tape/points"/>
+          <param name="use_wall_thread" value="true"/>
+
+          <!-- BEV/에지/허프 -->
+          <param name="grid_radius_m" value="7.0"/>
+          <param name="grid_res_m"    value="0.02"/>
+          <param name="accumulate_sec" value="1.0"/>
+          <param name="edge_source"   value="$(arg edge_source)"/>
+          <param name="edge_z_band_m" value="0.08"/>
+
+          <param name="hough_rho_res_m"     value="0.05"/>
+          <param name="hough_min_votes_base" value="3"/>
+          <param name="hough_topk"          value="6"/>
+          <param name="hough_vote_frac"     value="0.003"/>
+
+          <!-- 슬롯 스코어링 -->
+          <param name="slot_length_m"     value="1.0"/>
+          <param name="width_candidates_m" value="[0.45, 0.5, 0.52]"/>
+          <param name="pair_width_tol_m"  value="0.06"/>
+          <param name="center_step_m"     value="0.03"/>
+          <param name="min_score"         value="0.20"/>
+          <param name="w_empty"           value="0.70"/>
+          <param name="w_wheelstop"       value="0.20"/>
+          <param name="w_edge"            value="0.10"/>
+          <param name="occupied_ratio_thr" value="0.06"/>
+
+          <!-- 전방만 -->
+          <param name="only_front"  value="true"/>
+          <param name="front_axis"  value="x"/>
+          <param name="front_min_m" value="0.40"/>
+
+          <param name="points_hz_guess" value="6.5"/>
+        </node>
+      </group>
+
+      <group unless="$(arg use_tape)">
+        <node pkg="auto_parking" type="parking_line_detector_node.py" name="perception" output="screen" respawn="true">
+          <param name="frame_id" value="map"/>
+          <param name="points_topic" value="/ouster/points_map"/>
+          <param name="use_wall_thread" value="true"/>
+
+          <param name="grid_radius_m" value="7.0"/>
+          <param name="grid_res_m"    value="0.02"/>
+          <param name="accumulate_sec" value="1.0"/>
+          <param name="edge_source"   value="$(arg edge_source)"/>
+          <param name="edge_z_band_m" value="0.08"/>
+
+          <param name="hough_rho_res_m"     value="0.05"/>
+          <param name="hough_min_votes_base" value="3"/>
+          <param name="hough_topk"          value="6"/>
+          <param name="hough_vote_frac"     value="0.003"/>
+
+          <param name="slot_length_m"     value="1.0"/>
+          <param name="width_candidates_m" value="[0.45, 0.5, 0.52]"/>
+          <param name="pair_width_tol_m"  value="0.06"/>
+          <param name="center_step_m"     value="0.03"/>
+          <param name="min_score"         value="0.20"/>
+          <param name="w_empty"           value="0.70"/>
+          <param name="w_wheelstop"       value="0.20"/>
+          <param name="w_edge"            value="0.10"/>
+          <param name="occupied_ratio_thr" value="0.06"/>
+
+          <param name="only_front"  value="true"/>
+          <param name="front_axis"  value="x"/>
+          <param name="front_min_m" value="0.40"/>
+
+          <param name="points_hz_guess" value="6.5"/>
+        </node>
+      </group>
+
+      <!-- 계획/제어/매니저/표시/로그 -->
+      <node pkg="auto_parking" type="parking_planner_node.py"   name="planner"   output="screen">
+        <param name="frame_id" value="map"/>
+        <param name="step" value="0.1"/>
+      </node>
+
+      <node pkg="auto_parking" type="parking_controller_node.py" name="controller" output="screen">
+        <param name="max_speed" value="0.2"/>
+        <param name="lookahead" value="0.6"/>
+        <param name="xy_tol" value="0.08"/>
+        <param name="yaw_tol_deg" value="3.0"/>
+      </node>
+
+      <node pkg="auto_parking" type="parking_manager_node.py" name="manager" output="screen">
+        <param name="xy_tol" value="0.08"/>
+      </node>
+
+      <node pkg="auto_parking" type="parking_debug_viz.py" name="debug_viz" output="screen">
+        <param name="line_width" value="0.08"/>
+        <param name="text_size"  value="0.40"/>
+        <param name="z_up"       value="0.08"/>
+      </node>
+
+      <node pkg="auto_parking" type="parking_slots_logger.py" name="slots_logger" output="screen">
+        <param name="out" value="/tmp/parking_slots.csv"/>
+      </node>
+    </group>
+
+    <!-- RViz: map 고정 -->
+    <node pkg="rviz" type="rviz" name="rviz"
+          args="-d $(find auto_parking)/rviz/parking_debug.rviz -f map"/>
+  </group>
+</launch>

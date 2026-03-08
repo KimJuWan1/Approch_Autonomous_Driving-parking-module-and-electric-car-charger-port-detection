@@ -1,0 +1,47 @@
+<launch>
+  <!-- ===== 옵션 인자 ===== -->
+  <arg name="start_dwa"            default="true"/>
+  <arg name="start_occupancy"      default="true"/>
+  <arg name="start_arrive_monitor" default="true"/>
+
+  <!-- ===== (선택) 내부 DWA 실행 ===== -->
+  <group if="$(arg start_dwa)">
+    <include file="$(find dynamic_window_approach)/launch/dynamic_window_approach.launch"/>
+  </group>
+
+  <!-- ===== (선택) 내부 점유 판단 실행 ===== -->
+  <group if="$(arg start_occupancy)">
+    <include file="$(find parking_occupancy)/launch/parking_occupancy.launch"/>
+  </group>
+
+  <!-- ===== (선택) 도착 판정 =====
+       arrive_monitor.py 안에 기본값 있음:
+       path_topic=/astar/path, frame_id=map, rosout goal 감지 on -->
+  <group if="$(arg start_arrive_monitor)">
+    <node pkg="parking_executor" type="arrive_monitor.py" name="arrive_monitor_main" output="screen"/>
+  </group>
+
+  <!-- ===== twist_mux (최소 설정) =====
+       출력은 /cmd_vel, nav/park/e-stop만 사용 -->
+  <node pkg="twist_mux" type="twist_mux" name="twist_mux" output="screen">
+    <param name="output" value="/cmd_vel"/>
+    <rosparam param="locks">
+      - {name: estop, topic: /e_stop, timeout: 0.0, priority: 255}
+    </rosparam>
+    <rosparam param="topics">
+      - {name: nav,  topic: /cmd_vel_nav,  timeout: 0.5, priority: 10}
+      - {name: park, topic: /cmd_vel_park, timeout: 0.5, priority: 50}
+    </rosparam>
+  </node>
+
+  <!-- ===== AutoPark Controller =====
+       parking_controller.py 기본값:
+       map_frame=map, base_frame=base_link, slot_frame=parking_slot
+       cmd_vel_out=/cmd_vel_park, cmd_vel_nav_in=/cmd_vel_nav
+       activate_topic=/arrive_monitor/arrived, rate=20Hz,
+       gains/limits/tolerances 모두 내부 기본값 사용 -->
+  <node pkg="parking_executor" type="parking_controller.py" name="parking_controller" output="screen">
+    <!-- ⚠ 필요 시 한 줄만 추가: 점유 모듈이 TF를 'parking_slot_0'로 줄 때 -->
+    <!-- <param name="slot_frame" value="parking_slot_0"/> -->
+  </node>
+</launch>

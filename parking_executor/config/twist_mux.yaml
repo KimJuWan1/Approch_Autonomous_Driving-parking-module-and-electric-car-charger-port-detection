@@ -1,0 +1,16 @@
+topics:
+  - name: nav
+    topic: /cmd_vel_nav   # ← 이거 필수
+    timeout: 0.5
+    priority: 10
+  - name: park
+    topic: /cmd_vel_park
+    timeout: 0.5
+    priority: 50
+
+locks:
+  - name: estop
+    topic: /e_stop
+    timeout: 0.0
+    priority: 255
+

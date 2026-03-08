@@ -1,0 +1,16 @@
+<launch>
+    <arg name="project" default="lio_sam"/>
+    
+    <!-- Parameters -->
+    <rosparam file="$(find lio_localizer)/config/params-kitti.yaml" command="load" />
+
+    <!-- Nodes -->
+    <node pkg="lio_localizer" type="lio_localizer_imuPreintegration"   name="lio_localizer_imuPreintegration"    output="screen" 	 respawn="true"/>
+    <node pkg="lio_localizer" type="lio_localizer_imageProjection"     name="lio_localizer_imageProjection"      output="screen"     respawn="true"/>
+    <node pkg="lio_localizer" type="lio_localizer_featureExtraction"   name="lio_localizer_featureExtraction"    output="screen"     respawn="true"/>
+    <node pkg="lio_localizer" type="lio_localizer_mapLocalization"     name="lio_localizer_mapLocalization"      output="screen"     respawn="true"/>
+    
+    <!--- Run Rviz-->
+    <include file="$(find lio_localizer)/launch/include/module_rviz.launch" />
+
+</launch>

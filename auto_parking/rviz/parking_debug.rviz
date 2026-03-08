@@ -1,0 +1,47 @@
+Panels:
+  - Class: rviz/Displays
+    Name: Displays
+  - Class: rviz/Views
+    Name: Views
+Visualization Manager:
+  Global Options:
+    Fixed Frame: map
+    Frame Rate: 30
+  Displays:
+    - Class: rviz/TF
+      Name: TF
+      Enabled: true
+    - Class: rviz/PointCloud2
+      Name: Ouster Points
+      Enabled: true
+      Topic: /ouster/points_map
+      Queue Size: 2
+      Style: Flat Squares
+      Size (Pixels): 3
+      Color Transformer: Intensity
+      Autocompute Intensity Bounds: true
+      Use Fixed Frame: true
+    - Class: rviz/MarkerArray
+      Name: Parking Markers
+      Enabled: true
+      Topic: /parking/debug/markers
+      Queue Size: 2
+    - Class: rviz/Path
+      Name: Parking Path
+      Enabled: true
+      Topic: /parking/path
+      Queue Size: 2
+      Buffer Length: 10
+      Line Style: Lines
+      Line Width: 0.05
+  Tools:
+    - Class: rviz/Interact
+    - Class: rviz/MoveCamera
+    - Class: rviz/Measure
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 10
+      Pitch: 0.6
+      Yaw: 0.8
+      Target Frame: map

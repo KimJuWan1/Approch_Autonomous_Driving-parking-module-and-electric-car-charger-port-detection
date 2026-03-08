@@ -1,0 +1,16 @@
+<launch>   
+    <!-- Parameters -->
+    <rosparam file="$(find lio_localizer)/config/params-robot_scout.yaml" command="load" />
+
+    <!-- Lio-Localizer Nodes -->
+    <node pkg="lio_localizer" type="lio_localizer_imuPreintegration"    name="lio_localizer_imuPreintegration"      output="screen" 	respawn="true"/>
+    <node pkg="lio_localizer" type="lio_localizer_imageProjection"      name="lio_localizer_imageProjection"        output="screen"     respawn="true"/>
+    <node pkg="lio_localizer" type="lio_localizer_featureExtraction"    name="lio_localizer_featureExtraction"      output="screen"     respawn="true"/>
+    <node pkg="lio_localizer" type="lio_localizer_mapLocalization"      name="lio_localizer_mapLocalization"        output="screen"     respawn="true"/>
+    
+    <!-- Local Planner Node -->
+    <include file="$(find local_planner)/launch/global_trajectory_planner.launch" />
+
+    <!--- Run Rviz-->
+    <node pkg="rviz" type="rviz" name="robot_rviz" args="-d $(find lio_localizer)/launch/include/config/rviz_with_local_planner.rviz" />
+</launch>

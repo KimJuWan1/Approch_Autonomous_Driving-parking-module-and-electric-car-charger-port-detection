@@ -1,0 +1,16 @@
+<package format="2">
+  <name>parking_executor</name>
+  <version>0.0.1</version>
+  <description>Precise parking (slot-aligned) executor</description>
+  <maintainer email="210736@jnu.ac.kr">you</maintainer>
+  <license>BSD</license>
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+</package>
+

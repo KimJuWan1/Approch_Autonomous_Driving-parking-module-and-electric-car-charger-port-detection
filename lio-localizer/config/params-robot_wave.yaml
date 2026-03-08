@@ -1,0 +1,69 @@
+lio_localizer:
+
+  # Topics
+  pointCloudTopic: "velodyne_points"            # Point cloud data
+  imuTopic: "imu/data"                        # IMU data
+  gpsTopic: "smc_2000/fix"
+
+  # Map File Path
+  # mapFilePath: "map/ai_convergence"
+  mapFilePath: "map/wave_0405"
+
+  # Initial pose (x, y, z, roll, pitch, yaw)
+  cfg_use_initial_pose_setup: True
+  cfg_initial_pose_m_deg: [0, 0, 0, 0, 0, 125.0] 
+
+  # Frames
+  lidarFrame: "velo_lidar"
+  odometryFrame: "map"
+  mapFrame: "map"
+
+  # GPS Settings
+  gpsCovThreshold: 2.0                        # m^2, threshold for using GPS data
+
+  # Sensor Settings
+  sensor: velodyne                              # lidar sensor type, 'velodyne' or 'ouster' or 'livox'
+  N_SCAN: 32                                 # number of lidar channel (i.e., Velodyne/Ouster: 16, 32, 64, 128, Livox Horizon: 6)
+  Horizon_SCAN: 1800                          # lidar horizontal resolution (Velodyne:1800, Ouster:512,1024,2048, Livox Horizon: 4000)
+  downsampleRate: 4                           # default: 1. Downsample your data if too many points. i.e., 16 = 64 / 4, 16 = 16 / 1
+  lidarMinRange: 1.0                          # default: 1.0, minimum lidar range to be used
+  lidarMaxRange: 1000.0                       # default: 1000.0, maximum lidar range to be used
+
+  # IMU Settings
+  imuAccNoise: 3.9939570888238808e-03
+  imuGyrNoise: 1.5636343949698187e-03
+  imuAccBiasN: 6.4356659353532566e-05
+  imuGyrBiasN: 3.5640318696367613e-05
+  imuGravity: 9.80511
+  imuRPYWeight: 0.01
+
+  # Extrinsics: T_lb (lidar -> imu)
+  extrinsicTrans: [0.0, 0.0, -0.11]
+  extrinsicRot: [-1, 0, 0,
+                  0, 1, 0,
+                  0, 0, -1]
+  extrinsicRPY: [0, -1, 0,
+                 1, 0, 0,
+                 0, 0, 1]
+
+  # LOAM feature threshold
+  edgeThreshold: 1.0
+  surfThreshold: 0.1
+  edgeFeatureMinValidNum: 10
+  surfFeatureMinValidNum: 100
+
+  # voxel filter paprams
+  odometrySurfLeafSize: 0.6                     # default: 0.4 - outdoor, 0.2 - indoor
+  mappingCornerLeafSize: 0.3                    # default: 0.2 - outdoor, 0.1 - indoor
+  mappingSurfLeafSize: 0.6                      # default: 0.4 - outdoor, 0.2 - indoor
+
+  # mapLocalization
+  initializationMethod: GICP  # GICP, NONE
+  initialMapBoundary: 50.
+  initialNumOfGicpIteration: 50
+  VoxelGridFilterSize: 0.1
+  pointCorrespondenceDist: 5.
+  numOfFindCorrespondence: 3
+  numOfOptimizationIteration: 100
+  numOfOptimizationCores: 7
+  mapMatchingMethod: LOAM   # LOAM, ICP, GICP

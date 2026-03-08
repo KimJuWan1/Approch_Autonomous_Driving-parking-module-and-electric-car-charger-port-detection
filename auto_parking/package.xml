@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>auto_parking</name>
+  <version>0.0.1</version>
+  <description>Parking module: perception, planner, controller, manager, and bringup (with RViz config)</description>
+
+  <maintainer email="you@example.com">aimlab</maintainer>
+  <license>BSD</license>
+
+  <!-- Build tool -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Build-time deps (messages/actions + components in find_package) -->
+  <build_depend>message_generation</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>tf2_sensor_msgs</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+
+  <!-- Run-time deps -->
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>actionlib</exec_depend>
+  <exec_depend>actionlib_msgs</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf2_sensor_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+
+  <!-- tf.transformations (dummy perception에서 사용) -->
+  <exec_depend>tf</exec_depend>
+
+  <!-- RViz 런처 -->
+  <exec_depend>rviz</exec_depend>
+</package>
