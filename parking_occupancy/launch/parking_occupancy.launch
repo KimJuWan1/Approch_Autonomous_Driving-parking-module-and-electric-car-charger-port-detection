@@ -1,0 +1,40 @@
+<launch>
+  <!-- 후보 토픽: 순서가 곧 우선순위(앞일수록 선호) -->
+  <rosparam param="cloud_topic_candidates">
+    [/lio_localizer/localization/cloud_deskewed,
+     /lio_sam/mapping/cloud_registered,
+     /lio_sam/mapping/cloud_deskewed,
+     /ouster/points]
+  </rosparam>
+
+  <node pkg="parking_occupancy" type="fixed_parking_occupancy.py" name="parking_occupancy" output="screen" respawn="true">
+    <param name="frame_id" value="map"/>
+    <rosparam file="$(find parking_occupancy)/config/slots_3floor.yaml" command="load"/>
+
+    <!-- 자동 선택: cloud_topic 비워두면 candidates 중 '현재 떠있는 것'을 사용.
+         강제로 특정 토픽을 쓰고 싶으면 아래 값에 넣어줘. -->
+    <param name="use_cloud_for_occupancy" value="true"/>
+    <param name="cloud_topic" value=""/>
+    <param name="prefer_map_cloud" value="true"/>
+    <param name="topic_scan_period" value="2.0"/>
+
+    <param name="use_tf" value="true"/>
+    <param name="target_frame" value="map"/>
+
+    <!-- 합리적 기본값 -->
+    <param name="obstacle_z_low"  value="-0.45"/>
+    <param name="obstacle_z_high" value="1.5"/>
+    <param name="slot_inset_m" value="0.05"/>
+    <param name="occupied_mode" value="count"/>
+    <param name="occupied_min_points" value="8"/>
+    <param name="occupied_ratio_thr" value="0.12"/>
+
+    <param name="update_rate" value="8.0"/>
+    <param name="best_strategy" value="closest_x"/>
+    <param name="front_min_m" value="0.30"/>
+
+    <!-- 디버그 -->
+    <param name="show_counts" value="true"/>
+    <param name="force_red_when_cloud_seen" value="false"/>
+  </node>
+</launch>
